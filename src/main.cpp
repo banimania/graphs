@@ -1,4 +1,3 @@
-// #include <bits/stdc++.h>
 #include <iostream>
 #include <queue>
 #include <raylib.h>
@@ -42,17 +41,29 @@ public:
     DrawCircle(x, y, nodeR, marked ? ORANGE : BLACK);
     DrawCircle(x, y, nodeR * 0.9, WHITE);
 
-    string text = to_string(id).c_str();
+    string text = to_string(id+1).c_str();
     float textX = x - MeasureTextEx(font, text.c_str(), 30.0f, 0.0f).x / 2.0f;
     float textY = y - MeasureTextEx(font, text.c_str(), 30.0f, 0.0f).y / 2.0f;
-    DrawTextEx(font, to_string(id).c_str(), {textX, textY}, 30.0f, 0.0f, BLACK);
+    DrawTextEx(font, text.c_str(), {textX, textY}, 30.0f, 0.0f, BLACK);
   }
 };
+
+class Edge {
+  public:
+    int u, v;
+
+    Edge(int u, int v) : u(u), v(v) {};
+  
+    void drawEdge(Vector2 p1, Vector2 p2) {
+      DrawLineEx(p1, p2, 5, ORANGE);
+    }
+  };
 
 class Graph {
 public:
   vector<Node> nodes;
   vector<vector<int>> adj;
+  vector<Edge> markedEdges;
 
   bool startedDFS = false, startedBFS = false;
   stack<int> dfsStack;
@@ -69,13 +80,19 @@ public:
   }
 
   void drawGraph() {
+
+    // Draw black edges
     for (int i = 0; i < adj.size(); i++) {
       Vector2 start = {nodes[i].x, nodes[i].y};
       for (int j = 0; j < adj[i].size(); j++) {
-        bool markEdge = (nodes[i].marked && nodes[adj[i][j]].marked);
         Vector2 end = {nodes[adj[i][j]].x, nodes[adj[i][j]].y};
-        DrawLineEx(start, end, 5, markEdge ? ORANGE : BLACK);
+        DrawLineEx(start, end, 5, BLACK);
       }
+    }
+
+    // Draw orange edges
+    for(Edge e : markedEdges) {
+      e.drawEdge(Vector2{nodes[e.u].x, nodes[e.u].y}, Vector2{nodes[e.v].x, nodes[e.v].y});
     }
 
     for (int i = 0; i < nodes.size(); i++) {
@@ -90,43 +107,55 @@ public:
     dfsStack = stack<int>();
     bfsQueue = queue<int>();
 
+    markedEdges.clear();
+
     for (int i = 0; i < nodes.size(); i++) {
       nodes[i].marked = false;
     }
   }
 
   void dfsStep() {
-    if (dfsStack.empty()) return;
-    
-    int current = dfsStack.top();
 
-    bool visitedAll = true;
+    // Make sure we always actually visit a new node
+    while (!dfsStack.empty()) {
+        int current = dfsStack.top();
+        for (int neighbour : adj[current]) {
+            if (!nodes[neighbour].marked) {
+                nodes[neighbour].marked = true;
+                markedEdges.push_back(Edge(current, neighbour));
+                dfsStack.push(neighbour);
+                return; // Exit after adding a new node
+            }
+        }
 
-    for (int neighbour : adj[current]) {
-      if (!nodes[neighbour].marked) {
-        nodes[neighbour].marked = true;
-        dfsStack.push(neighbour);
-        visitedAll = false;
-        break;
-      }
-    }
-
-    if (visitedAll) {
-      dfsStack.pop();
+        // If all neighbors are visited, pop the current node and continue
+        dfsStack.pop();
     }
   }
 
   void bfsStep() {
     if (bfsQueue.empty()) return;
-    
-    int current = bfsQueue.front();
-    bfsQueue.pop();
 
-    for (int neighbour : adj[current]) {
-      if (!nodes[neighbour].marked) {
-        nodes[neighbour].marked = true;
-        bfsQueue.push(neighbour);
-      }
+    std::queue<int> currentQueue;
+    
+    // Move all nodes from bfsQueue to currentQueue
+    while (!bfsQueue.empty()) {
+        currentQueue.push(bfsQueue.front());
+        bfsQueue.pop();
+    }
+
+    // Process all nodes in currentQueue
+    while (!currentQueue.empty()) {
+        int current = currentQueue.front();
+        currentQueue.pop();
+
+        for (int neighbour : adj[current]) {
+            if (!nodes[neighbour].marked) {
+                nodes[neighbour].marked = true;
+                markedEdges.push_back(Edge(current, neighbour));
+                bfsQueue.push(neighbour); // These will form the next step's queue
+            }
+        }
     }
   }
 
@@ -151,7 +180,6 @@ bool wasMovingCamera = false;
 void mainLoop() {
   float scale = fmin((float) GetScreenWidth() / GAME_SCREEN_WIDTH, (float) GetScreenHeight() / GAME_SCREEN_HEIGHT);
 
-  cout << wasMovingCamera << endl;
   mouse = GetMousePosition();
   mouse.x = (mouse.x - (GetScreenWidth() - (GAME_SCREEN_WIDTH * scale)) * 0.5f) / scale;
   mouse.y = (mouse.y - (GetScreenHeight() - (GAME_SCREEN_HEIGHT * scale)) * 0.5f) / scale;
