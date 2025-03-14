@@ -1,4 +1,5 @@
 // #include <bits/stdc++.h>
+#include <iostream>
 #include <queue>
 #include <raylib.h>
 #include <rlgl.h>
@@ -144,9 +145,13 @@ Graph g;
 int mode = 0; // 0 = "build graph" 1 = "dfs" 2 = "bfs"
 int stNode = -1;
 
+int lastNodeMoved = -1;
+bool wasMovingCamera = false;
+
 void mainLoop() {
   float scale = fmin((float) GetScreenWidth() / GAME_SCREEN_WIDTH, (float) GetScreenHeight() / GAME_SCREEN_HEIGHT);
 
+  cout << wasMovingCamera << endl;
   mouse = GetMousePosition();
   mouse.x = (mouse.x - (GetScreenWidth() - (GAME_SCREEN_WIDTH * scale)) * 0.5f) / scale;
   mouse.y = (mouse.y - (GetScreenHeight() - (GAME_SCREEN_HEIGHT * scale)) * 0.5f) / scale;
@@ -171,10 +176,26 @@ void mainLoop() {
     g.restartAlgorithms();
   }
 
-  if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
     Vector2 delta = GetMouseDelta();
     delta = {delta.x / cam.zoom, delta.y / cam.zoom};
-    cam.target = Vector2Subtract(cam.target, delta);
+
+    if (lastNodeMoved != -1) {
+      g.nodes[lastNodeMoved].x += delta.x;
+      g.nodes[lastNodeMoved].y += delta.y;
+    } else {
+      int node = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
+
+      int magnitude = sqrt(pow(delta.x, 2) + pow(delta.y, 2));
+      if (node != -1) {
+        g.nodes[node].x += delta.x;
+        g.nodes[node].y += delta.y;
+        lastNodeMoved = node;
+      } else if (magnitude > 0.2) {
+        cam.target = Vector2Subtract(cam.target, delta);
+        wasMovingCamera = true;
+      }
+    }
   }
 
   float wheelDelta = GetMouseWheelMove();
@@ -195,19 +216,25 @@ void mainLoop() {
     else if (mode == 2) g.bfsStep();
   }
 
-  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
     stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
   }
 
-  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    if (stNode != -1) {
-      if (mode == 0) {
-        int fiNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
+  if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
+    if (stNode != -1 && mode == 0) {
+      int fiNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
-        if (fiNode != -1) {
-          g.addEdge(stNode, fiNode);
-        }
-      } else if (mode == 1) {
+      if (fiNode != -1) {
+        g.addEdge(stNode, fiNode);
+      }
+    } 
+    stNode = -1;
+  }
+
+  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    lastNodeMoved = -1;
+    if (stNode != -1) {
+      if (mode == 1) {
         g.restartAlgorithms();
 
         g.startedDFS = true;
@@ -221,10 +248,11 @@ void mainLoop() {
         g.bfsQueue.push(stNode);
       }
     } else {
-      if (mode == 0) g.addNode(mouseWorldPos.x, mouseWorldPos.y);
+      if (mode == 0 && !wasMovingCamera) g.addNode(mouseWorldPos.x, mouseWorldPos.y);
     }
 
     stNode = -1;
+    wasMovingCamera = false;
   }
 
   g.drawGraph();
