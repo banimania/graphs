@@ -1,4 +1,4 @@
-#include "../include/graph.hpp"
+#include "graph.hpp"
 
 void Graph::addNode(float x, float y) {
   nodes.push_back(Node(nodes.size(), x, y));

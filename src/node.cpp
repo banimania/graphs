@@ -1,4 +1,4 @@
-#include "../include/node.hpp"
+#include "node.hpp"
 
 void Node::drawNode() {
   DrawCircle(x, y, nodeR, marked ? ORANGE : BLACK);

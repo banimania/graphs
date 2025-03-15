@@ -1,5 +1,5 @@
-#include "../include/globals.hpp"
-#include "../include/graph.hpp"
+#include "globals.hpp"
+#include "graph.hpp"
 #include <raylib.h>
 #if defined(__EMSCRIPTEN__)
   #include <emscripten/emscripten.h>
