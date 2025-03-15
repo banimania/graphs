@@ -80,7 +80,6 @@ public:
   }
 
   void drawGraph() {
-
     // Draw black edges
     for (int i = 0; i < adj.size(); i++) {
       Vector2 start = {nodes[i].x, nodes[i].y};
@@ -115,7 +114,6 @@ public:
   }
 
   void dfsStep() {
-
     // Make sure we always actually visit a new node
     while (!dfsStack.empty()) {
         int current = dfsStack.top();
@@ -127,7 +125,6 @@ public:
                 return; // Exit after adding a new node
             }
         }
-
         // If all neighbors are visited, pop the current node and continue
         dfsStack.pop();
     }
@@ -173,6 +170,7 @@ Graph g;
 
 int mode = 0; // 0 = "build graph" 1 = "dfs" 2 = "bfs"
 int stNode = -1;
+int lastStNode = -1;
 
 int lastNodeMoved = -1;
 bool wasMovingCamera = false;
@@ -245,14 +243,31 @@ void mainLoop() {
   }
 
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    // Unmark the previous node if there was one
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && lastStNode != -1) {
+      g.nodes[lastStNode].marked = false;
+    }
+
     stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
+
+    // Mark the new node and update lastSelectedNode
+    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && stNode != -1) {
+      g.nodes[stNode].marked = true;
+      lastStNode = stNode;
+    }
   }
 
   if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
     if (stNode != -1 && mode == 0) {
+
       int fiNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
       if (fiNode != -1) {
+        // Unmark the previous node if there was one
+        if (lastStNode != -1) {
+          g.nodes[lastStNode].marked = false;
+        }
+
         g.addEdge(stNode, fiNode);
       }
     } 
@@ -262,6 +277,15 @@ void mainLoop() {
   if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
     lastNodeMoved = -1;
     if (stNode != -1) {
+      if (mode == 0) {
+        // Unmark the previous node if there was one
+        if (lastStNode != -1) {
+            g.nodes[lastStNode].marked = false;
+        }
+        // Mark the new node and update lastSelectedNode
+        g.nodes[stNode].marked = true;
+        lastStNode = stNode;
+    }
       if (mode == 1) {
         g.restartAlgorithms();
 
