@@ -11,6 +11,8 @@ public:
   vector<vector<int>> adj;
   vector<Edge> markedEdges;
 
+  bool directed = false, weighted = false;
+
   bool startedDFS = false, startedBFS = false;
   stack<int> dfsStack;
   queue<int> bfsQueue;
