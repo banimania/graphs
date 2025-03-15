@@ -1,170 +1,17 @@
-#include <iostream>
-#include <queue>
+#include "../include/globals.hpp"
+#include "../include/graph.hpp"
 #include <raylib.h>
-#include <rlgl.h>
-#include <raymath.h>
-#include <stack>
-#include <string>
-#include <vector>
 #if defined(__EMSCRIPTEN__)
   #include <emscripten/emscripten.h>
 #endif
 
 using namespace std;
 
-const int WINDOW_WIDTH = 1280;
-const int WINDOW_HEIGHT = 720;
-const char* WINDOW_NAME = "Graphs";
-
-const int GAME_SCREEN_WIDTH = 1280;
-const int GAME_SCREEN_HEIGHT = 720;
-
 Camera2D cam;
 
 Vector2 mouse;
 
 RenderTexture2D target;
-
-Font font;
-
-float nodeR = 20.0f;
-class Node {
-public:
-  int id;
-  float x, y;
-
-  bool marked = false;
-
-  Node(int id, float x, float y) : x(x), y(y), id(id) {};
-
-  void drawNode() {
-    DrawCircle(x, y, nodeR, marked ? ORANGE : BLACK);
-    DrawCircle(x, y, nodeR * 0.9, WHITE);
-
-    string text = to_string(id+1).c_str();
-    float textX = x - MeasureTextEx(font, text.c_str(), 30.0f, 0.0f).x / 2.0f;
-    float textY = y - MeasureTextEx(font, text.c_str(), 30.0f, 0.0f).y / 2.0f;
-    DrawTextEx(font, text.c_str(), {textX, textY}, 30.0f, 0.0f, BLACK);
-  }
-};
-
-class Edge {
-  public:
-    int u, v;
-
-    Edge(int u, int v) : u(u), v(v) {};
-  
-    void drawEdge(Vector2 p1, Vector2 p2) {
-      DrawLineEx(p1, p2, 5, ORANGE);
-    }
-  };
-
-class Graph {
-public:
-  vector<Node> nodes;
-  vector<vector<int>> adj;
-  vector<Edge> markedEdges;
-
-  bool startedDFS = false, startedBFS = false;
-  stack<int> dfsStack;
-  queue<int> bfsQueue;
-
-  void addNode(float x, float y) {
-    nodes.push_back(Node(nodes.size(), x, y));
-    adj.push_back(vector<int>());
-  }
-
-  void addEdge(int u, int v) {
-    adj[u].push_back(v);
-    adj[v].push_back(u);
-  }
-
-  void drawGraph() {
-    // Draw black edges
-    for (int i = 0; i < adj.size(); i++) {
-      Vector2 start = {nodes[i].x, nodes[i].y};
-      for (int j = 0; j < adj[i].size(); j++) {
-        Vector2 end = {nodes[adj[i][j]].x, nodes[adj[i][j]].y};
-        DrawLineEx(start, end, 5, BLACK);
-      }
-    }
-
-    // Draw orange edges
-    for(Edge e : markedEdges) {
-      e.drawEdge(Vector2{nodes[e.u].x, nodes[e.u].y}, Vector2{nodes[e.v].x, nodes[e.v].y});
-    }
-
-    for (int i = 0; i < nodes.size(); i++) {
-      nodes[i].drawNode();
-    }
-  }
-
-  void restartAlgorithms() {
-    startedDFS = false;
-    startedBFS = false;
-
-    dfsStack = stack<int>();
-    bfsQueue = queue<int>();
-
-    markedEdges.clear();
-
-    for (int i = 0; i < nodes.size(); i++) {
-      nodes[i].marked = false;
-    }
-  }
-
-  void dfsStep() {
-    // Make sure we always actually visit a new node
-    while (!dfsStack.empty()) {
-        int current = dfsStack.top();
-        for (int neighbour : adj[current]) {
-            if (!nodes[neighbour].marked) {
-                nodes[neighbour].marked = true;
-                markedEdges.push_back(Edge(current, neighbour));
-                dfsStack.push(neighbour);
-                return; // Exit after adding a new node
-            }
-        }
-        // If all neighbors are visited, pop the current node and continue
-        dfsStack.pop();
-    }
-  }
-
-  void bfsStep() {
-    if (bfsQueue.empty()) return;
-
-    std::queue<int> currentQueue;
-    
-    // Move all nodes from bfsQueue to currentQueue
-    while (!bfsQueue.empty()) {
-        currentQueue.push(bfsQueue.front());
-        bfsQueue.pop();
-    }
-
-    // Process all nodes in currentQueue
-    while (!currentQueue.empty()) {
-        int current = currentQueue.front();
-        currentQueue.pop();
-
-        for (int neighbour : adj[current]) {
-            if (!nodes[neighbour].marked) {
-                nodes[neighbour].marked = true;
-                markedEdges.push_back(Edge(current, neighbour));
-                bfsQueue.push(neighbour); // These will form the next step's queue
-            }
-        }
-    }
-  }
-
-  int getNode(float x, float y) {
-    for (int i = 0; i < nodes.size(); i++) {
-      if (CheckCollisionPointCircle({x, y}, {nodes[i].x, nodes[i].y}, nodeR)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-};
 
 Graph g;
 
@@ -240,6 +87,12 @@ void mainLoop() {
   if (IsKeyReleased(KEY_SPACE)) {
     if (mode == 1) g.dfsStep();
     else if (mode == 2) g.bfsStep();
+  }
+
+  if (IsKeyPressed(KEY_DELETE) || IsKeyPressed(KEY_BACKSPACE)) {
+    if (mode == 0 && lastStNode != -1) {
+      g.removeNode(lastStNode);
+    }
   }
 
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -326,8 +179,8 @@ void mainLoop() {
   BeginDrawing();
   ClearBackground(BLACK);
   DrawTexturePro(target.texture, (Rectangle){ 0.0f, 0.0f, (float) target.texture.width, (float) -target.texture.height },
-                         (Rectangle){ (GetScreenWidth() - ((float) GAME_SCREEN_WIDTH * scale)) * 0.5f, (GetScreenHeight() - ((float) GAME_SCREEN_HEIGHT * scale)) * 0.5f,
-                         (float) GAME_SCREEN_WIDTH * scale, (float) GAME_SCREEN_HEIGHT * scale }, (Vector2) { 0, 0 }, 0.0f, WHITE);
+                 (Rectangle){ (GetScreenWidth() - ((float) GAME_SCREEN_WIDTH * scale)) * 0.5f, (GetScreenHeight() - ((float) GAME_SCREEN_HEIGHT * scale)) * 0.5f,
+                 (float) GAME_SCREEN_WIDTH * scale, (float) GAME_SCREEN_HEIGHT * scale }, (Vector2) { 0, 0 }, 0.0f, WHITE);
   EndDrawing();
 }
 
