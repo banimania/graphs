@@ -205,10 +205,14 @@ void mainLoop() {
     GuiLabel({35, 100, 100, 50}, "Edges: ");
     GuiSetStyle(DEFAULT, TEXT_SIZE, 25);
     if (GuiButton({150, 105, 230, 40}, g.directed ? "Directed" : "Non-directed")) {
-      g.directed ^= 1;
+      bool oldValue = g.directed;
+      g = Graph();
+      g.directed = !oldValue;
     }
     if (GuiButton({150, 160, 230, 40}, g.weighted ? "Weighted" : "Non-weighted")) {
-      g.weighted ^= 1;
+      bool oldValue = g.weighted;
+      g = Graph();
+      g.weighted = !oldValue;
     }
     
     GuiSetStyle(DEFAULT, TEXT_SIZE, 30);

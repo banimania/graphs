@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include <raylib.h>
 
 void Graph::addNode(float x, float y) {
   nodes.push_back(Node(nodes.size(), x, y));
@@ -7,7 +8,7 @@ void Graph::addNode(float x, float y) {
 
 void Graph::addEdge(int u, int v) {
   adj[u].push_back(v);
-  adj[v].push_back(u);
+  if (!directed) adj[v].push_back(u);
 }
 
 void Graph::drawGraph() {
