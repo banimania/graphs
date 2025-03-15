@@ -15,9 +15,33 @@ void Graph::drawGraph() {
   // Draw black edges
   for (int i = 0; i < adj.size(); i++) {
     Vector2 start = {nodes[i].x, nodes[i].y};
-    for (int j = 0; j < adj[i].size(); j++) {
+    for (int j = 0; j < adj[i].size(); j++) {      
       Vector2 end = {nodes[adj[i][j]].x, nodes[adj[i][j]].y};
-      DrawLineEx(start, end, 5, BLACK);
+      if (directed) {
+
+        //fixear luego la arista y el triangulito :)
+
+        float theta = atan2(nodes[adj[i][j]].y - nodes[i].y, nodes[adj[i][j]].x - nodes[i].x);
+        Vector2 new_point = {-(nodeR - 2) * cos(theta) + nodes[adj[i][j]].x, -(nodeR - 2) * sin(theta) + nodes[adj[i][j]].y};
+        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR +10) * sin(theta) + nodes[adj[i][j]].y};
+        Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j]].y};
+
+        float alpha = -M_PI/2 + theta;
+        p1.x -= -(10.0) * cos(alpha);
+        p1.y -= -(10.0) * sin(alpha);
+
+        p2.x += -(10.0) * cos(alpha);
+        p2.y += -(10.0) * sin(alpha);
+        
+        DrawTriangle(p2, new_point, p1, BLACK);
+
+        new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j]].y};
+        Vector2 old_point = {(nodeR) * cos(theta) + nodes[i].x, (nodeR) * sin(theta) + nodes[i].y};
+
+        DrawLineEx(old_point, new_point, 5, BLACK);
+      } else {
+        DrawLineEx(start, end, 5, BLACK);
+      }
     }
   }
 

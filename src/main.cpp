@@ -115,7 +115,7 @@ void mainLoop() {
       if (mode == 0 && lastStNode != -1) {
         g.removeNode(lastStNode);
         lastStNode = -1;
-        
+
       }
     }
 
@@ -124,7 +124,7 @@ void mainLoop() {
       if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && lastStNode != -1) {
         g.nodes[lastStNode].marked = false;
       }
-
+      //Hay algun bug aqui glhf, x2
       stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
       // Mark the new node and update lastSelectedNode
