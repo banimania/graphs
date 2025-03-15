@@ -114,6 +114,8 @@ void mainLoop() {
     if (IsKeyPressed(KEY_DELETE) || IsKeyPressed(KEY_BACKSPACE)) {
       if (mode == 0 && lastStNode != -1) {
         g.removeNode(lastStNode);
+        lastStNode = -1;
+        
       }
     }
 
