@@ -145,7 +145,7 @@ void mainLoop() {
             g.nodes[lastStNode].marked = false;
           }
 
-          g.addEdge(stNode, fiNode);
+          g.addEdge(stNode, fiNode, 1);
         }
       } 
       stNode = -1;
@@ -206,13 +206,17 @@ void mainLoop() {
     GuiSetStyle(DEFAULT, TEXT_SIZE, 25);
     if (GuiButton({150, 105, 230, 40}, g.directed ? "Directed" : "Non-directed")) {
       bool oldValue = g.directed;
+      bool weighted = g.weighted;
       g = Graph();
       g.directed = !oldValue;
+      g.weighted = weighted;
     }
     if (GuiButton({150, 160, 230, 40}, g.weighted ? "Weighted" : "Non-weighted")) {
       bool oldValue = g.weighted;
+      bool directed = g.directed;
       g = Graph();
       g.weighted = !oldValue;
+      g.directed = directed;
     }
     
     GuiSetStyle(DEFAULT, TEXT_SIZE, 30);

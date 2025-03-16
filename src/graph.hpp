@@ -8,7 +8,7 @@
 class Graph {
 public:
   vector<Node> nodes;
-  vector<vector<int>> adj;
+  vector<vector<pair<int, int>>> adj;
   vector<Edge> markedEdges;
 
   bool directed = false, weighted = false;
@@ -18,7 +18,7 @@ public:
   queue<int> bfsQueue;
 
   void addNode(float x, float y);
-  void addEdge(int u, int v);
+  void addEdge(int u, int v, int cost);
   void drawGraph();
   void restartAlgorithms();
   void dfsStep();

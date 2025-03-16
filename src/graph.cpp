@@ -1,14 +1,15 @@
 #include "graph.hpp"
 #include <raylib.h>
+#include <string>
 
 void Graph::addNode(float x, float y) {
   nodes.push_back(Node(nodes.size(), x, y));
-  adj.push_back(vector<int>());
+  adj.push_back(vector<pair<int, int>>());
 }
 
-void Graph::addEdge(int u, int v) {
-  adj[u].push_back(v);
-  if (!directed) adj[v].push_back(u);
+void Graph::addEdge(int u, int v, int c) {
+  adj[u].push_back({v, c});
+  if (!directed) adj[v].push_back({u, c});
 }
 
 void Graph::drawGraph() {
@@ -16,15 +17,30 @@ void Graph::drawGraph() {
   for (int i = 0; i < adj.size(); i++) {
     Vector2 start = {nodes[i].x, nodes[i].y};
     for (int j = 0; j < adj[i].size(); j++) {      
-      Vector2 end = {nodes[adj[i][j]].x, nodes[adj[i][j]].y};
+      Vector2 end = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
+
+      if (weighted) {
+        // fixear tp de peso (cuando cambia la orientación Y) glhf
+        float theta = atan2(nodes[adj[i][j].first].y - nodes[i].y, nodes[adj[i][j].first].x - nodes[i].x);
+
+        if (!directed && theta <= 0) theta += M_PI;
+        float alpha = - M_PI / 2 + theta;
+
+        Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, (end.y + start.y) / 2.0f + sin(alpha) * 30};
+        int cost = adj[i][j].second;
+        pos.x -= MeasureTextEx(font, to_string(cost).c_str(), 30, 0.0f).x / 2.0f;
+        pos.y -= MeasureTextEx(font, to_string(cost).c_str(), 30, 0.0f).y / 2.0f;
+        DrawTextEx(font, to_string(cost).c_str(), pos, 30.0f, 0.0f, BLACK);
+      }
+
+
       if (directed) {
+        // TODO: fixear luego la arista y el triangulito :)
 
-        //fixear luego la arista y el triangulito :)
-
-        float theta = atan2(nodes[adj[i][j]].y - nodes[i].y, nodes[adj[i][j]].x - nodes[i].x);
-        Vector2 new_point = {-(nodeR - 2) * cos(theta) + nodes[adj[i][j]].x, -(nodeR - 2) * sin(theta) + nodes[adj[i][j]].y};
-        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR +10) * sin(theta) + nodes[adj[i][j]].y};
-        Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j]].y};
+        float theta = atan2(nodes[adj[i][j].first].y - nodes[i].y, nodes[adj[i][j].first].x - nodes[i].x);
+        Vector2 new_point = {-(nodeR - 2) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR - 2) * sin(theta) + nodes[adj[i][j].first].y};
+        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR +10) * sin(theta) + nodes[adj[i][j].first].y};
+        Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
 
         float alpha = -M_PI/2 + theta;
         p1.x -= -(10.0) * cos(alpha);
@@ -35,13 +51,11 @@ void Graph::drawGraph() {
         
         DrawTriangle(p2, new_point, p1, BLACK);
 
-        new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j]].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j]].y};
+        new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
         Vector2 old_point = {(nodeR) * cos(theta) + nodes[i].x, (nodeR) * sin(theta) + nodes[i].y};
 
         DrawLineEx(old_point, new_point, 5, BLACK);
-      } else {
-        DrawLineEx(start, end, 5, BLACK);
-      }
+      } else DrawLineEx(start, end, 5, BLACK);
     }
   }
 
@@ -73,7 +87,7 @@ void Graph::dfsStep() {
   // Make sure we always actually visit a new node
   while (!dfsStack.empty()) {
     int current = dfsStack.top();
-    for (int neighbour : adj[current]) {
+    for (auto [neighbour, cost] : adj[current]) {
       if (!nodes[neighbour].marked) {
         nodes[neighbour].marked = true;
         markedEdges.push_back(Edge(current, neighbour));
@@ -102,7 +116,7 @@ void Graph::bfsStep() {
     int current = currentQueue.front();
     currentQueue.pop();
 
-    for (int neighbour : adj[current]) {
+    for (auto [neighbour, cost] : adj[current]) {
       if (!nodes[neighbour].marked) {
         nodes[neighbour].marked = true;
         markedEdges.push_back(Edge(current, neighbour));
@@ -124,9 +138,9 @@ int Graph::getNode(float x, float y) {
 void Graph::removeNode(int id) {
   for (int i = 0; i < adj.size(); i++) {
     for (auto it = adj[i].begin(); it != adj[i].end(); ) {
-      if (*it == id) it = adj[i].erase(it);
+      if ((*it).first == id) it = adj[i].erase(it);
       else {
-        if (*it > id) (*it)--;
+        if ((*it).first > id) (*it).first--;
         ++it;
       }
     }
