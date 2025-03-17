@@ -311,7 +311,7 @@ void mainLoop() {
       string pathString;
 
       for (int j = 0; j < path.size(); j++) {
-        pathString += to_string(path[j]) + (j == path.size() - 1 ? "" : " -> ");
+        pathString += to_string(path[j] + 1) + (j == path.size() - 1 ? "" : " -> ");
       }
       GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
     }
@@ -339,7 +339,6 @@ int main() {
   target = LoadRenderTexture(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
   SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
-  SetTargetFPS(20);
   SetConfigFlags(FLAG_VSYNC_HINT);
 
   cam = {  };
