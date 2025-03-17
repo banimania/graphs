@@ -296,7 +296,7 @@ int main() {
   // SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME);
   
-  font = LoadFontEx("res/arial.ttf", 30, 0, 0);
+  font = LoadFontEx("res/arial.ttf", 100, 0, 0);
   GuiSetFont(font);
 
   target = LoadRenderTexture(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
