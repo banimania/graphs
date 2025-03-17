@@ -158,6 +158,7 @@ void mainLoop() {
             }
             else g.addEdge(stNode, fiNode, 1);
           } else {
+            if(!g.directed) g.removeEdge(fiNode, stNode);
             g.removeEdge(stNode, fiNode);
           }
         }

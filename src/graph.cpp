@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <sstream>
 #include <string>
+#define M_PI 3.141592
 
 void Graph::addNode(float x, float y) {
   nodes.push_back(Node(nodes.size(), x, y));
@@ -30,9 +31,19 @@ void Graph::drawGraph() {
 
         Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, (end.y + start.y) / 2.0f + sin(alpha) * 30};
         float cost = adj[i][j].second;
+        std::ostringstream oss;
+        oss << std::fixed; 
+    
+        // If it is an integer, show without decimals
+        if (cost == static_cast<int>(cost)) {
+            oss << static_cast<int>(cost);
+        } else {
+            // Get how many decimals are needed
+            double rounded = static_cast<int>(cost * 100) / 100.0;
+            int decimals = (rounded * 10 == static_cast<int>(rounded * 10)) ? 1 : 2;
+            oss << setprecision(decimals) << cost;
+        }
 
-        ostringstream oss;
-        oss << setprecision(2) << cost;
         string costString = oss.str();
 
         pos.x -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).x / 2.0f;
