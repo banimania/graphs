@@ -28,6 +28,11 @@ bool wasMovingCamera = false;
 Rectangle optionsRectangle = {20, WINDOW_HEIGHT - 60, 100, 40};
 bool inOptionsMenu = false;
 
+bool isAskingWeight = false;
+bool editingWeight = false;
+int askNodeSt = -1, askNodeFi = -1;
+char weightText[16] = "1.0";
+
 void mainLoop() {
   GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
   
@@ -51,7 +56,7 @@ void mainLoop() {
   EndMode2D();
 
   bool skip = false;
-  if (GuiButton(optionsRectangle, inOptionsMenu ? "Close" : "Options")) {
+  if (GuiButton(optionsRectangle, inOptionsMenu ? "Close" : "Options") && !isAskingWeight) {
     inOptionsMenu ^= 1;
     g.restartAlgorithms();
     skip = true;
@@ -59,7 +64,7 @@ void mainLoop() {
 
   BeginMode2D(cam);
 
-  if (!inOptionsMenu && !skip) { 
+  if (!inOptionsMenu && !skip && !isAskingWeight) { 
     if (IsKeyPressed(KEY_ONE)) {
       mode = 0;
       g.restartAlgorithms();
@@ -146,7 +151,12 @@ void mainLoop() {
           }
 
           if (!g.areNeighbours(stNode, fiNode)) {
-            g.addEdge(stNode, fiNode, 1);
+            if (g.weighted) {
+              isAskingWeight = true;
+              askNodeSt = stNode;
+              askNodeFi = fiNode;
+            }
+            else g.addEdge(stNode, fiNode, 1);
           } else {
             g.removeEdge(stNode, fiNode);
           }
@@ -190,6 +200,33 @@ void mainLoop() {
   }
 
   EndMode2D();
+
+  if (isAskingWeight) {
+    float wx = WINDOW_WIDTH / 2.0f - 150;
+    float wy = WINDOW_HEIGHT / 2.0f - 75;
+    float ww = 200;
+    float wh = 150;
+
+    GuiPanel({wx, wy, ww, wh}, "Enter edge weight");
+    // GuiTextInputBox({wx + 50, wy + 50, 100, 50}, "Edge weight", "Edge weight",  , char *text, int textMaxSize, bool *secretViewActive)
+    GuiSetStyle(TEXTBOX, BASE_COLOR_PRESSED, ColorToInt(WHITE));
+    GuiSetStyle(TEXTBOX, BASE_COLOR_FOCUSED, ColorToInt(WHITE));
+    GuiSetStyle(TEXTBOX, BORDER_COLOR_FOCUSED, ColorToInt(BLACK));
+    GuiSetStyle(TEXTBOX, BORDER_COLOR_PRESSED, ColorToInt(BLACK));
+    GuiSetStyle(TEXTBOX, TEXT_COLOR_PRESSED, ColorToInt(BLACK));
+    GuiSetStyle(TEXTBOX, TEXT_COLOR_FOCUSED, ColorToInt(BLACK));
+    if (GuiTextBox({wx + 10, wy + 30, 180, 50}, weightText, 20, editingWeight)) {
+      editingWeight = !editingWeight;
+    }
+    if (GuiButton({wx + 10, wy + 90, 180, 50}, "Set weight")) {
+      float cost = atof(weightText);
+      g.addEdge(askNodeSt, askNodeFi, cost);
+      askNodeSt = -1, askNodeFi = -1;
+      editingWeight = false;
+      isAskingWeight = false;
+      strcpy(weightText, "1.0");
+    }
+  }
 
   string modeStr = "Graph building";
 
