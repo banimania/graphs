@@ -18,6 +18,7 @@ public:
   queue<int> bfsQueue;
   priority_queue<pair<int, float>, vector<pair<int, float>>, function<bool(pair<int, float>, pair<int, float>)>> dijkstraPq;
   vector<float> bestDist;
+  vector<int> dijkstraPrev;
 
   void addNode(float x, float y);
   void addEdge(int u, int v, float cost);
@@ -26,6 +27,7 @@ public:
   void dfsStep();
   void bfsStep();
   void dijkstraStep();
+  vector<int> getDijkstraPath(int u, int v);
   int getNode(float x, float y);
   void removeNode(int id);
   void removeEdge(int u, int v);

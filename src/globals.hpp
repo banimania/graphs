@@ -1,6 +1,7 @@
 #ifndef GLOBALS_HPP
 #define GLOBALS_HPP
 
+#include <iomanip>
 #include <raylib.h>
 #include <iostream>
 #include <queue>
@@ -23,5 +24,22 @@ static const int GAME_SCREEN_HEIGHT = 720;
 static const float nodeR = 20.0f;
 
 inline Font font;
+
+inline string formatNum(float num) {
+  ostringstream oss;
+  oss << fixed; 
+
+  // If it is an integer, show without decimals
+  if (num == static_cast<int>(num)) {
+    oss << static_cast<int>(num);
+  } else {
+    // Get how many decimals are needed
+    double rounded = static_cast<int>(num * 100) / 100.0;
+    int decimals = (rounded * 10 == static_cast<int>(rounded * 10)) ? 1 : 2;
+    oss << setprecision(decimals) << num;
+  }
+
+  return oss.str();
+}
 
 #endif

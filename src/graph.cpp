@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <raylib.h>
@@ -33,20 +34,8 @@ void Graph::drawGraph() {
 
         Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, (end.y + start.y) / 2.0f + sin(alpha) * 30};
         float cost = adj[i][j].second;
-        std::ostringstream oss;
-        oss << std::fixed; 
 
-        // If it is an integer, show without decimals
-        if (cost == static_cast<int>(cost)) {
-          oss << static_cast<int>(cost);
-        } else {
-          // Get how many decimals are needed
-          double rounded = static_cast<int>(cost * 100) / 100.0;
-          int decimals = (rounded * 10 == static_cast<int>(rounded * 10)) ? 1 : 2;
-          oss << setprecision(decimals) << cost;
-        }
-
-        string costString = oss.str();
+        string costString = formatNum(cost);
 
         pos.x -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).x / 2.0f;
         pos.y -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).y / 2.0f;
@@ -121,7 +110,7 @@ void Graph::restartAlgorithms() {
     return a.second > b.second;
   });
   bestDist = vector<float>(nodes.size(), numeric_limits<float>::infinity());
-
+  dijkstraPrev = vector<int>(nodes.size(), -1);
 
   markedEdges.clear();
 
@@ -191,12 +180,25 @@ void Graph::dijkstraStep() {
         bestDist[neighbour] = newDist;
         markedEdges.push_back(Edge(current.first, neighbour));
         nodes[neighbour].marked = true;
+        dijkstraPrev[neighbour] = current.first;
         dijkstraPq.push({neighbour, newDist});
         flag = 1;
       }
     }
     if (flag) return;
   }
+}
+
+vector<int> Graph::getDijkstraPath(int u, int v) {
+  vector<int> path;
+
+  int current = v;
+  while (current != -1) {
+    path.push_back(current);
+    current = dijkstraPrev[current];
+  }
+  reverse(path.begin(), path.end());
+  return path;
 }
 
 int Graph::getNode(float x, float y) {

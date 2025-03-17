@@ -298,6 +298,24 @@ void mainLoop() {
     }
   }
 
+  if (g.startedDijkstra && g.dijkstraPq.empty()) {
+    float wx = WINDOW_WIDTH - 400;
+    float wy = 20;
+    float ww = 350;
+    float wh = WINDOW_HEIGHT - 40;
+    GuiPanel({wx, wy, ww, wh}, "Dijkstra information");
+
+    for (int i = 0; i < g.nodes.size(); i++) {
+      GuiLabel({wx + 20, wy + 50 + i * 60, 200, 50}, string("Distance to " + to_string(i + 1) + ": " + formatNum(g.bestDist[i])).c_str());
+      vector<int> path = g.getDijkstraPath(stNode, i);
+      string pathString;
+
+      for (int j = 0; j < path.size(); j++) {
+        pathString += to_string(path[j]) + (j == path.size() - 1 ? "" : " -> ");
+      }
+      GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
+    }
+  }
 
   DrawTextEx(font, modeStr.c_str(), {20, 15}, 30.0f, 0.0f, DARKGRAY);
 
@@ -321,7 +339,8 @@ int main() {
   target = LoadRenderTexture(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
   SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
-  SetTargetFPS(60);
+  SetTargetFPS(20);
+  SetConfigFlags(FLAG_VSYNC_HINT);
 
   cam = {  };
   cam.zoom = 1.0f;
