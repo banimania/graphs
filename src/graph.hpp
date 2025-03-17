@@ -16,7 +16,7 @@ public:
   bool startedDFS = false, startedBFS = false, startedDijkstra = false;
   stack<int> dfsStack;
   queue<int> bfsQueue;
-  priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>> dijkstraPq;
+  priority_queue<pair<int, float>, vector<pair<int, float>>, function<bool(pair<int, float>, pair<int, float>)>> dijkstraPq;
   vector<float> bestDist;
 
   void addNode(float x, float y);

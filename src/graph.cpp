@@ -95,9 +95,12 @@ void Graph::restartAlgorithms() {
 
   dfsStack = stack<int>();
   bfsQueue = queue<int>();
-  dijkstraPq = priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>>();
+  dijkstraPq = priority_queue<pair<int, float>, vector<pair<int, float>>, function<bool(pair<int, float>, pair<int, float>)>> ([](const pair<int, float> &a, const pair<int, float> &b) {
+    return a.second > b.second;
+  });
   bestDist = vector<float>(nodes.size(), numeric_limits<float>::infinity());
 
+  
   markedEdges.clear();
 
   for (int i = 0; i < nodes.size(); i++) {
@@ -151,27 +154,26 @@ void Graph::bfsStep() {
 void Graph::dijkstraStep() {
   if (dijkstraPq.empty()) return;
 
-  priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>> currentQueue;
+  bool flag = 0;
 
-  // Move all nodes from bfsQueue to currentQueue
   while (!dijkstraPq.empty()) {
-    currentQueue.push(dijkstraPq.top());
+    pair<int, float> current = dijkstraPq.top();
+
+    
     dijkstraPq.pop();
-  }
 
-  // Process all nodes in currentQueue
-  while (!currentQueue.empty()) {
-    auto [current, currentDist] = currentQueue.top();
-    currentQueue.pop();
-
-    for (auto [neighbour, weight] : adj[current]) {
-      if (bestDist[neighbour] > currentDist + weight) {
-        bestDist[neighbour] = currentDist + weight;
-        nodes[neighbour].marked = true;
-        markedEdges.push_back(Edge(current, neighbour));
-        dijkstraPq.emplace(neighbour, bestDist[neighbour]); // These will form the next steps queue
+    if (current.second > bestDist[current.first]) continue;
+ 
+    for (auto [neighbour, cost] : adj[current.first]) {
+      float newDist = current.second + cost;
+      if (newDist < bestDist[neighbour]) {
+        bestDist[neighbour] = newDist;
+        markedEdges.push_back(Edge(current.first, neighbour));
+        dijkstraPq.push({neighbour, newDist});
+        flag = 1;
       }
     }
+    if (flag) return;
   }
 }
 

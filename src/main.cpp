@@ -198,8 +198,9 @@ void mainLoop() {
           g.restartAlgorithms();
 
           g.startedDijkstra = true;
+          g.dijkstraPq.push({stNode, 0});
+          g.bestDist[stNode] = 0;
           g.nodes[stNode].marked = true;
-          g.dijkstraPq.emplace(stNode, 0);
         }
       } else {
         if (mode == 0 && !wasMovingCamera) g.addNode(mouseWorldPos.x, mouseWorldPos.y);
