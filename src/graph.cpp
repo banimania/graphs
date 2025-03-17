@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <sstream>
 #include <string>
+#include <limits>
 #define M_PI 3.141592
 
 void Graph::addNode(float x, float y) {
@@ -90,9 +91,12 @@ void Graph::drawGraph() {
 void Graph::restartAlgorithms() {
   startedDFS = false;
   startedBFS = false;
+  startedDijkstra = false;
 
   dfsStack = stack<int>();
   bfsQueue = queue<int>();
+  dijkstraPq = priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>>();
+  bestDist = vector<float>(nodes.size(), numeric_limits<float>::infinity());
 
   markedEdges.clear();
 
@@ -121,7 +125,7 @@ void Graph::dfsStep() {
 void Graph::bfsStep() {
   if (bfsQueue.empty()) return;
 
-  std::queue<int> currentQueue;
+  queue<int> currentQueue;
 
   // Move all nodes from bfsQueue to currentQueue
   while (!bfsQueue.empty()) {
@@ -139,6 +143,33 @@ void Graph::bfsStep() {
         nodes[neighbour].marked = true;
         markedEdges.push_back(Edge(current, neighbour));
         bfsQueue.push(neighbour); // These will form the next steps queue
+      }
+    }
+  }
+}
+
+void Graph::dijkstraStep() {
+  if (dijkstraPq.empty()) return;
+
+  priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>> currentQueue;
+
+  // Move all nodes from bfsQueue to currentQueue
+  while (!dijkstraPq.empty()) {
+    currentQueue.push(dijkstraPq.top());
+    dijkstraPq.pop();
+  }
+
+  // Process all nodes in currentQueue
+  while (!currentQueue.empty()) {
+    auto [current, currentDist] = currentQueue.top();
+    currentQueue.pop();
+
+    for (auto [neighbour, weight] : adj[current]) {
+      if (bestDist[neighbour] > currentDist + weight) {
+        bestDist[neighbour] = currentDist + weight;
+        nodes[neighbour].marked = true;
+        markedEdges.push_back(Edge(current, neighbour));
+        dijkstraPq.emplace(neighbour, bestDist[neighbour]); // These will form the next steps queue
       }
     }
   }

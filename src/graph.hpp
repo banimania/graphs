@@ -13,9 +13,11 @@ public:
 
   bool directed = false, weighted = false;
 
-  bool startedDFS = false, startedBFS = false;
+  bool startedDFS = false, startedBFS = false, startedDijkstra = false;
   stack<int> dfsStack;
   queue<int> bfsQueue;
+  priority_queue<pair<int, float>, vector<pair<int, float>>, greater<pair<int, float>>> dijkstraPq;
+  vector<float> bestDist;
 
   void addNode(float x, float y);
   void addEdge(int u, int v, float cost);
@@ -23,6 +25,7 @@ public:
   void restartAlgorithms();
   void dfsStep();
   void bfsStep();
+  void dijkstraStep();
   int getNode(float x, float y);
   void removeNode(int id);
   void removeEdge(int u, int v);

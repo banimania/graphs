@@ -74,6 +74,9 @@ void mainLoop() {
     } else if (IsKeyPressed(KEY_THREE)) {
       mode = 2;
       g.restartAlgorithms();
+    } else if (IsKeyPressed(KEY_FOUR)) {
+      mode = 3;
+      g.restartAlgorithms();
     }
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -114,6 +117,7 @@ void mainLoop() {
     if (IsKeyReleased(KEY_SPACE)) {
       if (mode == 1) g.dfsStep();
       else if (mode == 2) g.bfsStep();
+      else if (mode == 3) g.dijkstraStep();
     }
 
     if (IsKeyPressed(KEY_DELETE) || IsKeyPressed(KEY_BACKSPACE)) {
@@ -190,6 +194,12 @@ void mainLoop() {
           g.startedBFS = true;
           g.nodes[stNode].marked = true;
           g.bfsQueue.push(stNode);
+        } else if (mode == 3) {
+          g.restartAlgorithms();
+
+          g.startedDijkstra = true;
+          g.nodes[stNode].marked = true;
+          g.dijkstraPq.emplace(stNode, 0);
         }
       } else {
         if (mode == 0 && !wasMovingCamera) g.addNode(mouseWorldPos.x, mouseWorldPos.y);
@@ -219,7 +229,7 @@ void mainLoop() {
     if (GuiTextBox({wx + 10, wy + 30, 180, 50}, weightText, 20, editingWeight)) {
       editingWeight = !editingWeight;
     }
-    if (GuiButton({wx + 10, wy + 90, 180, 50}, "Set weight")) {
+    if (GuiButton({wx + 10, wy + 90, 180, 50}, "Set weight") || IsKeyReleased(KEY_ENTER)) {
       float cost = atof(weightText);
       g.addEdge(askNodeSt, askNodeFi, cost);
       askNodeSt = -1, askNodeFi = -1;
@@ -235,6 +245,8 @@ void mainLoop() {
     modeStr = "Depth-first search";
   } else if (mode == 2) {
     modeStr = "Breadth-first search";
+  } else if (mode == 3) {
+    modeStr = "Dijkstra";
   }
 
   if (inOptionsMenu) {
@@ -278,6 +290,11 @@ void mainLoop() {
       g.restartAlgorithms();
       inOptionsMenu = false;
       mode = 2;
+    }
+    if (GuiButton({150, 375, 230, 40}, "Dijkstra")) {
+      g.restartAlgorithms();
+      inOptionsMenu = false;
+      mode = 3;
     }
   }
   DrawTextEx(font, modeStr.c_str(), {20, 15}, 30.0f, 0.0f, DARKGRAY);
