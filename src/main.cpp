@@ -129,18 +129,13 @@ void mainLoop() {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-      // Unmark the previous node if there was one
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && lastStNode != -1) {
-        g.nodes[lastStNode].marked = false;
-      }
-      //Hay algun bug aqui glhf, x2
       stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
-      if ((g.startedDFS || g.startedBFS || g.startedDijkstra) && stNode == -1) {
+      if ((g.startedDFS || g.startedBFS || g.startedDijkstra) && stNode == -1 && !wasMovingCamera) {
         g.restartAlgorithms();
       }
 
-      // Mark the new node and update lasSelectedNode
+      // Mark the new node and update lastSelectedNode
       if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && stNode != -1) {
         g.nodes[stNode].marked = true;
         lastStNode = stNode;
@@ -216,7 +211,7 @@ void mainLoop() {
   }
 
   EndMode2D();
-
+  
   if (isAskingWeight) {
     float wx = WINDOW_WIDTH / 2.0f - 150;
     float wy = WINDOW_HEIGHT / 2.0f - 75;
@@ -302,6 +297,8 @@ void mainLoop() {
       mode = 3;
     }
   }
+
+
   DrawTextEx(font, modeStr.c_str(), {20, 15}, 30.0f, 0.0f, DARKGRAY);
 
   EndTextureMode();
