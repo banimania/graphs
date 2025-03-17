@@ -136,7 +136,11 @@ void mainLoop() {
       //Hay algun bug aqui glhf, x2
       stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
-      // Mark the new node and update lastSelectedNode
+      if ((g.startedDFS || g.startedBFS || g.startedDijkstra) && stNode == -1) {
+        g.restartAlgorithms();
+      }
+
+      // Mark the new node and update lasSelectedNode
       if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && stNode != -1) {
         g.nodes[stNode].marked = true;
         lastStNode = stNode;

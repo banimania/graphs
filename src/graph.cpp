@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include <cmath>
 #include <iomanip>
 #include <raylib.h>
 #include <sstream>
@@ -34,15 +35,15 @@ void Graph::drawGraph() {
         float cost = adj[i][j].second;
         std::ostringstream oss;
         oss << std::fixed; 
-    
+
         // If it is an integer, show without decimals
         if (cost == static_cast<int>(cost)) {
-            oss << static_cast<int>(cost);
+          oss << static_cast<int>(cost);
         } else {
-            // Get how many decimals are needed
-            double rounded = static_cast<int>(cost * 100) / 100.0;
-            int decimals = (rounded * 10 == static_cast<int>(rounded * 10)) ? 1 : 2;
-            oss << setprecision(decimals) << cost;
+          // Get how many decimals are needed
+          double rounded = static_cast<int>(cost * 100) / 100.0;
+          int decimals = (rounded * 10 == static_cast<int>(rounded * 10)) ? 1 : 2;
+          oss << setprecision(decimals) << cost;
         }
 
         string costString = oss.str();
@@ -65,7 +66,7 @@ void Graph::drawGraph() {
 
         p2.x += -(10.0) * cos(alpha);
         p2.y += -(10.0) * sin(alpha);
-        
+
         DrawTriangle(p2, new_point, p1, BLACK);
 
         new_point = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
@@ -80,7 +81,28 @@ void Graph::drawGraph() {
 
   // Draw orange edges
   for(Edge e : markedEdges) {
-    e.drawEdge(Vector2{nodes[e.u].x, nodes[e.u].y}, Vector2{nodes[e.v].x, nodes[e.v].y});
+    if (directed) {
+      float theta = atan2(nodes[e.v].y - nodes[e.u].y, nodes[e.v].x - nodes[e.u].x);
+      Vector2 new_point = {-(nodeR - 1) * cos(theta) + nodes[e.v].x, -(nodeR - 1) * sin(theta) + nodes[e.v].y};
+      Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
+      Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
+
+      float alpha = -M_PI / 2 + theta;
+      p1.x -= -(10.0) * cos(alpha);
+      p1.y -= -(10.0) * sin(alpha);
+
+      p2.x += -(10.0) * cos(alpha);
+      p2.y += -(10.0) * sin(alpha);
+
+      DrawTriangle(p2, new_point, p1, ORANGE);
+
+      new_point = {nodes[e.v].x, nodes[e.v].y};
+      Vector2 old_point = {nodes[e.u].x, nodes[e.u].y};
+      if (areNeighbours(e.u, e.v)) new_point = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
+      if (areNeighbours(e.v, e.u)) old_point = {(nodeR + 10) * cos(theta) + nodes[e.u].x, (nodeR + 10) * sin(theta) + nodes[e.u].y};
+
+      DrawLineEx(old_point, new_point, 5, ORANGE);
+    } else DrawLineEx({nodes[e.u].x, nodes[e.u].y}, {nodes[e.v].x, nodes[e.v].y}, 5, ORANGE);
   }
 
   for (int i = 0; i < nodes.size(); i++) {
@@ -100,7 +122,7 @@ void Graph::restartAlgorithms() {
   });
   bestDist = vector<float>(nodes.size(), numeric_limits<float>::infinity());
 
-  
+
   markedEdges.clear();
 
   for (int i = 0; i < nodes.size(); i++) {
@@ -159,16 +181,16 @@ void Graph::dijkstraStep() {
   while (!dijkstraPq.empty()) {
     pair<int, float> current = dijkstraPq.top();
 
-    
     dijkstraPq.pop();
 
     if (current.second > bestDist[current.first]) continue;
- 
+
     for (auto [neighbour, cost] : adj[current.first]) {
       float newDist = current.second + cost;
       if (newDist < bestDist[neighbour]) {
         bestDist[neighbour] = newDist;
         markedEdges.push_back(Edge(current.first, neighbour));
+        nodes[neighbour].marked = true;
         dijkstraPq.push({neighbour, newDist});
         flag = 1;
       }
@@ -198,7 +220,7 @@ void Graph::removeNode(int id) {
   }
   nodes.erase(nodes.begin() + id);
   adj.erase(adj.begin() + id);
-  
+
   for (int i = id; i < nodes.size(); i++) {
     nodes[i].id--;
   }
@@ -215,6 +237,6 @@ bool Graph::areNeighbours(int u, int v) {
   for (auto [neighbour, cost] : adj[u]) {
     if (neighbour == v) return true;
   }
-  
+
   return false;
 }
