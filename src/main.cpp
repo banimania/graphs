@@ -145,7 +145,11 @@ void mainLoop() {
             g.nodes[lastStNode].marked = false;
           }
 
-          g.addEdge(stNode, fiNode, 1);
+          if (!g.areNeighbours(stNode, fiNode)) {
+            g.addEdge(stNode, fiNode, 1);
+          } else {
+            g.removeEdge(stNode, fiNode);
+          }
         }
       } 
       stNode = -1;

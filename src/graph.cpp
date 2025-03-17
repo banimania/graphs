@@ -1,13 +1,15 @@
 #include "graph.hpp"
+#include <iomanip>
 #include <raylib.h>
+#include <sstream>
 #include <string>
 
 void Graph::addNode(float x, float y) {
   nodes.push_back(Node(nodes.size(), x, y));
-  adj.push_back(vector<pair<int, int>>());
+  adj.push_back(vector<pair<int, float>>());
 }
 
-void Graph::addEdge(int u, int v, int c) {
+void Graph::addEdge(int u, int v, float c) {
   adj[u].push_back({v, c});
   if (!directed) adj[v].push_back({u, c});
 }
@@ -27,22 +29,25 @@ void Graph::drawGraph() {
         float alpha = - M_PI / 2 + theta;
 
         Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, (end.y + start.y) / 2.0f + sin(alpha) * 30};
-        int cost = adj[i][j].second;
-        pos.x -= MeasureTextEx(font, to_string(cost).c_str(), 30, 0.0f).x / 2.0f;
-        pos.y -= MeasureTextEx(font, to_string(cost).c_str(), 30, 0.0f).y / 2.0f;
-        DrawTextEx(font, to_string(cost).c_str(), pos, 30.0f, 0.0f, BLACK);
+        float cost = adj[i][j].second;
+
+        ostringstream oss;
+        oss << setprecision(2) << cost;
+        string costString = oss.str();
+
+        pos.x -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).x / 2.0f;
+        pos.y -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).y / 2.0f;
+        DrawTextEx(font, costString.c_str(), pos, 30.0f, 0.0f, BLACK);
       }
 
 
       if (directed) {
-        // TODO: fixear luego la arista y el triangulito :)
-
         float theta = atan2(nodes[adj[i][j].first].y - nodes[i].y, nodes[adj[i][j].first].x - nodes[i].x);
-        Vector2 new_point = {-(nodeR - 2) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR - 2) * sin(theta) + nodes[adj[i][j].first].y};
-        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR +10) * sin(theta) + nodes[adj[i][j].first].y};
+        Vector2 new_point = {-(nodeR - 1) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR - 1) * sin(theta) + nodes[adj[i][j].first].y};
+        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
         Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
 
-        float alpha = -M_PI/2 + theta;
+        float alpha = -M_PI / 2 + theta;
         p1.x -= -(10.0) * cos(alpha);
         p1.y -= -(10.0) * sin(alpha);
 
@@ -51,8 +56,10 @@ void Graph::drawGraph() {
         
         DrawTriangle(p2, new_point, p1, BLACK);
 
-        new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
-        Vector2 old_point = {(nodeR) * cos(theta) + nodes[i].x, (nodeR) * sin(theta) + nodes[i].y};
+        new_point = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
+        Vector2 old_point = {nodes[i].x, nodes[i].y};
+        if (areNeighbours(i, adj[i][j].first)) new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
+        if (areNeighbours(adj[i][j].first, i)) old_point = {(nodeR + 10) * cos(theta) + nodes[i].x, (nodeR + 10) * sin(theta) + nodes[i].y};
 
         DrawLineEx(old_point, new_point, 5, BLACK);
       } else DrawLineEx(start, end, 5, BLACK);
@@ -141,7 +148,7 @@ void Graph::removeNode(int id) {
       if ((*it).first == id) it = adj[i].erase(it);
       else {
         if ((*it).first > id) (*it).first--;
-        ++it;
+        it++;
       }
     }
   }
@@ -151,4 +158,19 @@ void Graph::removeNode(int id) {
   for (int i = id; i < nodes.size(); i++) {
     nodes[i].id--;
   }
+}
+
+void Graph::removeEdge(int u, int v) {
+  for (auto it = adj[u].begin(); it != adj[u].end(); ) {
+    if ((*it).first == v) it = adj[u].erase(it);
+    else it++;
+  }
+}
+
+bool Graph::areNeighbours(int u, int v) {
+  for (auto [neighbour, cost] : adj[u]) {
+    if (neighbour == v) return true;
+  }
+  
+  return false;
 }
