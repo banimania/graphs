@@ -1,6 +1,7 @@
 #include "globals.hpp"
 #include "graph.hpp"
 #include <raylib.h>
+#include <string>
 #if defined(__EMSCRIPTEN__)
   #include <emscripten/emscripten.h>
 #endif
@@ -308,14 +309,30 @@ void mainLoop() {
     GuiPanel({wx, wy, ww, wh}, "Dijkstra information");
 
     for (size_t i = 0; i < g.nodes.size(); i++) {
-      GuiLabel({wx + 20, wy + 50 + i * 60, 200, 50}, string("Distance to " + to_string(i + 1) + ": " + formatNum(g.bestDist[i])).c_str());
-      vector<int> path = g.getDijkstraPath(stNode, i);
-      string pathString;
+      string distString = formatNum(g.bestDist[i]);
+      if (g.bestDist[i] == numeric_limits<float>::infinity()) distString = "Not reachable";
+      GuiLabel({wx + 20, wy + 50 + i * 60, 500, 50}, string("Distance to " + to_string(i + 1) + ": " + distString).c_str());
+      if (GuiButton({wx + 20, wy + 85 + i * 60, 200, 30}, "Show path")) {
+        for (size_t j = 0; j < g.nodes.size(); j++) {
+          g.nodes[j].marked = false;
+        }
+        g.nodes[i].marked = true;
 
-      for (size_t j = 0; j < path.size(); j++) {
-        pathString += to_string(path[j] + 1) + (j == path.size() - 1 ? "" : " -> ");
+        g.markedEdges.clear();
+        vector<int> path = g.getDijkstraPath(stNode, i);
+        for (size_t j = 0; j < path.size() - 1; j++) {
+          g.markedEdges.push_back({path[j], path[j + 1]});
+          g.nodes[path[j]].marked = true;
+          g.nodes[path[j + 1]].marked = true;
+        }
       }
-      GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
+      // vector<int> path = g.getDijkstraPath(stNode, i);
+      // string pathString;
+
+      // for (size_t j = 0; j < path.size(); j++) {
+      //   pathString += to_string(path[j] + 1) + (j == path.size() - 1 ? "" : " -> ");
+      // }
+      // GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
     }
   }
 
