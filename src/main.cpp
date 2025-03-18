@@ -38,10 +38,7 @@ void mainLoop() {
   
   float scale = fmin((float) GetScreenWidth() / GAME_SCREEN_WIDTH, (float) GetScreenHeight() / GAME_SCREEN_HEIGHT);
 
-  mouse = GetMousePosition();
-  mouse.x = (mouse.x - (GetScreenWidth() - (GAME_SCREEN_WIDTH * scale)) * 0.5f) / scale;
-  mouse.y = (mouse.y - (GetScreenHeight() - (GAME_SCREEN_HEIGHT * scale)) * 0.5f) / scale;
-  mouse = Vector2Clamp(mouse, (Vector2){ 0, 0 }, (Vector2){ (float) GAME_SCREEN_WIDTH, (float) GAME_SCREEN_HEIGHT });
+  mouse = GetMouseWorldPosition(scale);
 
   BeginTextureMode(target);
   ClearBackground(WHITE);
@@ -103,7 +100,7 @@ void mainLoop() {
 
     float wheelDelta = GetMouseWheelMove();
     if (wheelDelta != 0) {
-      Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), cam);
+      Vector2 mouseWorldPos = GetScreenToWorld2D(GetMouseWorldPosition(scale), cam);
 
       cam.offset = GetMousePosition();
 
