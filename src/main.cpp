@@ -102,8 +102,8 @@ void mainLoop() {
         g.nodes[lastNodeMoved].y += delta.y;
       } else {
         int node = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
-
         int magnitude = sqrt(pow(delta.x, 2) + pow(delta.y, 2));
+        
         if (node != -1) {
           g.nodes[node].x += delta.x;
           g.nodes[node].y += delta.y;

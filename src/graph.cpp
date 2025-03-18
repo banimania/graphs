@@ -18,21 +18,51 @@ void Graph::addEdge(int u, int v, float c) {
   if (!directed) adj[v].push_back({u, c});
 }
 
+void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness = 5.0f) {
+  float theta = atan2(to.y - from.y, to.x - from.x);
+
+  // Draw arrowhead
+  Vector2 arrowTip = {-(nodeR - 1) * cos(theta) + to.x, -(nodeR - 1) * sin(theta) + to.y};
+  Vector2 leftWing = {-(nodeR + 10) * cos(theta) + to.x, -(nodeR + 10) * sin(theta) + to.y};
+  Vector2 rightWing = leftWing;
+
+  float alpha = -M_PI / 2 + theta;
+
+  leftWing.x -= -(10.0f) * cos(alpha);
+  leftWing.y -= -(10.0f) * sin(alpha);
+
+  rightWing.x += -(10.0f) * cos(alpha);
+  rightWing.y += -(10.0f) * sin(alpha);
+
+  DrawTriangle(rightWing, arrowTip, leftWing, color);
+
+  // Adjust points conditionally (like original)
+  Vector2 adjustedFrom = from;
+  Vector2 adjustedTo = to;
+
+  if (adjustTo)
+      adjustedTo = {-(nodeR + 10) * cos(theta) + to.x, -(nodeR + 10) * sin(theta) + to.y};
+
+  if (adjustFrom)
+      adjustedFrom = {(nodeR + 10) * cos(theta) + from.x, (nodeR + 10) * sin(theta) + from.y};
+
+  DrawLineEx(adjustedFrom, adjustedTo, thickness, color);
+}
+
 void Graph::drawGraph() {
   // Draw black edges
   for (size_t i = 0; i < adj.size(); i++) {
     Vector2 start = {nodes[i].x, nodes[i].y};
-    for (size_t j = 0; j < adj[i].size(); j++) {      
+    for (size_t j = 0; j < adj[i].size(); j++) {
       Vector2 end = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
 
       if (weighted) {
-        // fixear tp de peso (cuando cambia la orientación Y) glhf
-        float theta = atan2(nodes[adj[i][j].first].y - nodes[i].y, nodes[adj[i][j].first].x - nodes[i].x);
-
+        float theta = atan2(end.y - start.y, end.x - start.x);
         if (!directed && theta <= 0) theta += M_PI;
-        float alpha = - M_PI / 2 + theta;
+        float alpha = -M_PI / 2 + theta;
 
-        Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, (end.y + start.y) / 2.0f + sin(alpha) * 30};
+        Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, 
+                      (end.y + start.y) / 2.0f + sin(alpha) * 30};
         float cost = adj[i][j].second;
 
         string costString = formatNum(cost);
@@ -42,62 +72,36 @@ void Graph::drawGraph() {
         DrawTextEx(font, costString.c_str(), pos, 30.0f, 0.0f, BLACK);
       }
 
-
       if (directed) {
-        float theta = atan2(nodes[adj[i][j].first].y - nodes[i].y, nodes[adj[i][j].first].x - nodes[i].x);
-        Vector2 new_point = {-(nodeR - 1) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR - 1) * sin(theta) + nodes[adj[i][j].first].y};
-        Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
-        Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
-
-        float alpha = -M_PI / 2 + theta;
-        p1.x -= -(10.0) * cos(alpha);
-        p1.y -= -(10.0) * sin(alpha);
-
-        p2.x += -(10.0) * cos(alpha);
-        p2.y += -(10.0) * sin(alpha);
-
-        DrawTriangle(p2, new_point, p1, BLACK);
-
-        new_point = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
-        Vector2 old_point = {nodes[i].x, nodes[i].y};
-        if (areNeighbours(i, adj[i][j].first)) new_point = {-(nodeR + 10) * cos(theta) + nodes[adj[i][j].first].x, -(nodeR + 10) * sin(theta) + nodes[adj[i][j].first].y};
-        if (areNeighbours(adj[i][j].first, i)) old_point = {(nodeR + 10) * cos(theta) + nodes[i].x, (nodeR + 10) * sin(theta) + nodes[i].y};
-
-        DrawLineEx(old_point, new_point, 5, BLACK);
-      } else DrawLineEx(start, end, 5, BLACK);
+        bool adjustFrom = areNeighbours(adj[i][j].first, i);
+        bool adjustTo = areNeighbours(i, adj[i][j].first);
+        drawDirectedEdge(start, end, adjustFrom, adjustTo, BLACK);
+      } else {
+        DrawLineEx(start, end, 5, BLACK);
+      }
     }
   }
 
   // Draw orange edges
-  for(Edge e : markedEdges) {
+  for (Edge e : markedEdges) {
+    Vector2 start = {nodes[e.u].x, nodes[e.u].y};
+    Vector2 end = {nodes[e.v].x, nodes[e.v].y};
+
     if (directed) {
-      float theta = atan2(nodes[e.v].y - nodes[e.u].y, nodes[e.v].x - nodes[e.u].x);
-      Vector2 new_point = {-(nodeR - 1) * cos(theta) + nodes[e.v].x, -(nodeR - 1) * sin(theta) + nodes[e.v].y};
-      Vector2 p1 = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
-      Vector2 p2 = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
-
-      float alpha = -M_PI / 2 + theta;
-      p1.x -= -(10.0) * cos(alpha);
-      p1.y -= -(10.0) * sin(alpha);
-
-      p2.x += -(10.0) * cos(alpha);
-      p2.y += -(10.0) * sin(alpha);
-
-      DrawTriangle(p2, new_point, p1, ORANGE);
-
-      new_point = {nodes[e.v].x, nodes[e.v].y};
-      Vector2 old_point = {nodes[e.u].x, nodes[e.u].y};
-      if (areNeighbours(e.u, e.v)) new_point = {-(nodeR + 10) * cos(theta) + nodes[e.v].x, -(nodeR + 10) * sin(theta) + nodes[e.v].y};
-      if (areNeighbours(e.v, e.u)) old_point = {(nodeR + 10) * cos(theta) + nodes[e.u].x, (nodeR + 10) * sin(theta) + nodes[e.u].y};
-
-      DrawLineEx(old_point, new_point, 5, ORANGE);
-    } else DrawLineEx({nodes[e.u].x, nodes[e.u].y}, {nodes[e.v].x, nodes[e.v].y}, 5, ORANGE);
+      bool adjustFrom = areNeighbours(e.v, e.u);
+      bool adjustTo = areNeighbours(e.u, e.v);
+      drawDirectedEdge(start, end, adjustFrom, adjustTo, ORANGE);
+    } else {
+      DrawLineEx(start, end, 5, ORANGE);
+    }
   }
 
+  // Draw nodes
   for (size_t i = 0; i < nodes.size(); i++) {
     nodes[i].drawNode();
   }
 }
+
 
 void Graph::restartAlgorithms() {
   startedDFS = false;
