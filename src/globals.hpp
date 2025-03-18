@@ -3,6 +3,7 @@
 
 #include <iomanip>
 #include <raylib.h>
+#include <sstream>
 #include <iostream>
 #include <queue>
 #include <rlgl.h>

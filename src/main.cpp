@@ -34,18 +34,23 @@ bool editingWeight = false;
 int askNodeSt = -1, askNodeFi = -1;
 char weightText[16] = "1.0";
 
+const int GRAPH_BUILDING = 0, DFS = 1, BFS = 2, DIJKSTRA = 3, KRUSKAL = 4;
+
 inline void HandleModeSelection(int &mode, Graph &g) {
   if (IsKeyPressed(KEY_ONE)) {
-    mode = 0;
+    mode = GRAPH_BUILDING;
     g.restartAlgorithms();
   } else if (IsKeyPressed(KEY_TWO)) {
-    mode = 1;
+    mode = DFS;
     g.restartAlgorithms();
   } else if (IsKeyPressed(KEY_THREE)) {
-    mode = 2;
+    mode = BFS;
     g.restartAlgorithms();
   } else if (IsKeyPressed(KEY_FOUR)) {
-    mode = 3;
+    mode = DIJKSTRA;
+    g.restartAlgorithms();
+  } else if (IsKeyPressed(KEY_FIVE)) {
+    mode = KRUSKAL;
     g.restartAlgorithms();
   }
 }
@@ -119,13 +124,14 @@ void mainLoop() {
     HandleCameraZoom(cam);
 
     if (IsKeyReleased(KEY_SPACE)) {
-      if (mode == 1) g.dfsStep();
-      else if (mode == 2) g.bfsStep();
-      else if (mode == 3) g.dijkstraStep();
+      if (mode == DFS) g.dfsStep();
+      else if (mode == BFS) g.bfsStep();
+      else if (mode == DIJKSTRA) g.dijkstraStep();
+      else if (mode == KRUSKAL) g.kruskalStep();
     }
 
     if (IsKeyPressed(KEY_DELETE) || IsKeyPressed(KEY_BACKSPACE)) {
-      if (mode == 0 && lastStNode != -1) {
+      if (mode == GRAPH_BUILDING && lastStNode != -1) {
         g.removeNode(lastStNode);
         lastStNode = -1;
       }
@@ -143,7 +149,7 @@ void mainLoop() {
     }
 
     if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
-      if (stNode != -1 && mode == 0) {
+      if (stNode != -1 && mode == GRAPH_BUILDING) {
 
         int fiNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
@@ -172,7 +178,7 @@ void mainLoop() {
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
       lastNodeMoved = -1;
       if (stNode != -1) {
-        if (mode == 0) {
+        if (mode == GRAPH_BUILDING) {
           // Unmark the previous node if there was one
           if (lastStNode != -1) {
             g.nodes[lastStNode].marked = false;
@@ -181,19 +187,19 @@ void mainLoop() {
           g.nodes[stNode].marked = true;
           lastStNode = stNode;
         }
-        if (mode == 1) {
+        if (mode == DFS) {
           g.restartAlgorithms();
 
           g.startedDFS = true;
           g.nodes[stNode].marked = true;
           g.dfsStack.push(stNode);
-        } else if (mode == 2) {
+        } else if (mode == BFS) {
           g.restartAlgorithms();
 
           g.startedBFS = true;
           g.nodes[stNode].marked = true;
           g.bfsQueue.push(stNode);
-        } else if (mode == 3) {
+        } else if (mode == DIJKSTRA) {
           g.restartAlgorithms();
 
           g.startedDijkstra = true;
@@ -201,8 +207,12 @@ void mainLoop() {
           g.bestDist[stNode] = 0;
           g.nodes[stNode].marked = true;
         }
+      } else if (mode == KRUSKAL) {
+        g.restartAlgorithms();
+
+        g.startedKruskal = true;
       } else {
-        if (mode == 0 && !wasMovingCamera) {
+        if (mode == GRAPH_BUILDING && !wasMovingCamera) {
           g.restartAlgorithms();
           g.addNode(mouseWorldPos.x, mouseWorldPos.y);
         }
@@ -244,12 +254,14 @@ void mainLoop() {
 
   string modeStr = "Graph building";
 
-  if (mode == 1) {
+  if (mode == DFS) {
     modeStr = "Depth-first search";
-  } else if (mode == 2) {
+  } else if (mode == BFS) {
     modeStr = "Breadth-first search";
-  } else if (mode == 3) {
+  } else if (mode == DIJKSTRA) {
     modeStr = "Dijkstra";
+  } else if (mode == KRUSKAL) {
+    modeStr = "Kruskal";
   }
 
   if (inOptionsMenu) {
@@ -299,6 +311,11 @@ void mainLoop() {
       inOptionsMenu = false;
       mode = 3;
     }
+    if (GuiButton({150, 425, 230, 40}, "Kruskal")) {
+      g.restartAlgorithms();
+      inOptionsMenu = false;
+      mode = 4;
+    }
   }
 
   if (g.startedDijkstra && g.dijkstraPq.empty()) {
@@ -321,18 +338,11 @@ void mainLoop() {
         g.markedEdges.clear();
         vector<int> path = g.getDijkstraPath(stNode, i);
         for (size_t j = 0; j < path.size() - 1; j++) {
-          g.markedEdges.push_back({path[j], path[j + 1]});
+          g.markedEdges.push_back({path[j], path[j + 1], 1});
           g.nodes[path[j]].marked = true;
           g.nodes[path[j + 1]].marked = true;
         }
       }
-      // vector<int> path = g.getDijkstraPath(stNode, i);
-      // string pathString;
-
-      // for (size_t j = 0; j < path.size(); j++) {
-      //   pathString += to_string(path[j] + 1) + (j == path.size() - 1 ? "" : " -> ");
-      // }
-      // GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
     }
   }
 

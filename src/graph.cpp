@@ -143,11 +143,61 @@ void Graph::resetDijkstra() {
   });
 }
 
+void Graph::resetKruskal() {
+  startedKruskal = false;
+  kruskalPq = priority_queue<Edge, vector<Edge>, function<bool(Edge, Edge)>>([](const Edge& a, const Edge &b) {
+    return a.cost > b.cost;
+  });
+  
+  for (size_t i = 0; i < adj.size(); i++) {
+    for (auto [j, cost] : adj[i]) {
+      kruskalPq.push({(int) i, j, cost});
+    }
+  }
+
+  kruskalCost = 0;
+
+  parent.assign(nodes.size(), 0);
+  for (size_t i = 0; i < nodes.size(); i++) parent[i] = i;
+  setSize.assign(nodes.size(), 1);
+}
+
+int Graph::findSet(int v) {
+  if (v == parent[v]) return v;
+  return parent[v] = findSet(parent[v]);
+}
+
+bool Graph::unionSet(int a, int b) {
+  a = findSet(a);
+  b = findSet(b);
+  if (a != b) {
+    if (setSize[a] < setSize[b]) swap(a, b);
+    parent[b] = a;
+    setSize[a] += setSize[b];
+    return true;
+  } 
+  return false;
+}
+
+void Graph::calculateDSU() {
+  parent.assign(nodes.size(), 0);
+  for (size_t i = 0; i < nodes.size(); i++) parent[i] = i;
+  setSize.assign(nodes.size(), 1);
+
+  for (size_t i = 0; i < adj.size(); i++){
+    for (auto [v, cost] : adj[i]){
+      unionSet(i, v);
+    }
+  }
+}
+
 void Graph::restartAlgorithms() {
   resetDFS();
   resetBFS();
   resetDijkstra();
   resetSearchStates();
+  calculateDSU();
+  resetKruskal();
 }
 
 void Graph::dfsStep() {
@@ -157,7 +207,7 @@ void Graph::dfsStep() {
     for (auto [neighbour, cost] : adj[current]) {
       if (!nodes[neighbour].marked) {
         nodes[neighbour].marked = true;
-        markedEdges.push_back(Edge(current, neighbour));
+        markedEdges.push_back(Edge(current, neighbour, cost));
         dfsStack.push(neighbour);
         return; // Exit after adding a new node
       }
@@ -186,7 +236,7 @@ void Graph::bfsStep() {
     for (auto [neighbour, cost] : adj[current]) {
       if (!nodes[neighbour].marked) {
         nodes[neighbour].marked = true;
-        markedEdges.push_back(Edge(current, neighbour));
+        markedEdges.push_back(Edge(current, neighbour, cost));
         bfsQueue.push(neighbour); // These will form the next steps queue
       }
     }
@@ -209,7 +259,7 @@ void Graph::dijkstraStep() {
       float newDist = current.second + cost;
       if (newDist < bestDist[neighbour]) {
         bestDist[neighbour] = newDist;
-        markedEdges.push_back(Edge(current.first, neighbour));
+        markedEdges.push_back(Edge(current.first, neighbour, cost));
         nodes[neighbour].marked = true;
         dijkstraPrev[neighbour] = current.first;
         dijkstraPq.push({neighbour, newDist});
@@ -230,6 +280,24 @@ vector<int> Graph::getDijkstraPath(int u, int v) {
   }
   reverse(path.begin(), path.end());
   return path;
+}
+
+void Graph::kruskalStep() {
+  if (kruskalPq.empty()) return;
+
+  bool added = false;
+
+  while (!added && !kruskalPq.empty()) {
+    Edge currentEdge = kruskalPq.top();
+    kruskalPq.pop();
+
+    if (findSet(currentEdge.u) != findSet(currentEdge.v)) {
+      unionSet(currentEdge.u, currentEdge.v);
+      kruskalCost += currentEdge.cost;
+      markedEdges.push_back(currentEdge);
+      added = true;
+    }
+  }
 }
 
 int Graph::getNode(float x, float y) {
