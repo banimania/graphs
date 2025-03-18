@@ -20,9 +20,9 @@ void Graph::addEdge(int u, int v, float c) {
 
 void Graph::drawGraph() {
   // Draw black edges
-  for (int i = 0; i < adj.size(); i++) {
+  for (size_t i = 0; i < adj.size(); i++) {
     Vector2 start = {nodes[i].x, nodes[i].y};
-    for (int j = 0; j < adj[i].size(); j++) {      
+    for (size_t j = 0; j < adj[i].size(); j++) {      
       Vector2 end = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
 
       if (weighted) {
@@ -94,7 +94,7 @@ void Graph::drawGraph() {
     } else DrawLineEx({nodes[e.u].x, nodes[e.u].y}, {nodes[e.v].x, nodes[e.v].y}, 5, ORANGE);
   }
 
-  for (int i = 0; i < nodes.size(); i++) {
+  for (size_t i = 0; i < nodes.size(); i++) {
     nodes[i].drawNode();
   }
 }
@@ -114,7 +114,7 @@ void Graph::restartAlgorithms() {
 
   markedEdges.clear();
 
-  for (int i = 0; i < nodes.size(); i++) {
+  for (size_t i = 0; i < nodes.size(); i++) {
     nodes[i].marked = false;
   }
 }
@@ -202,7 +202,7 @@ vector<int> Graph::getDijkstraPath(int u, int v) {
 }
 
 int Graph::getNode(float x, float y) {
-  for (int i = 0; i < nodes.size(); i++) {
+  for (size_t i = 0; i < nodes.size(); i++) {
     if (CheckCollisionPointCircle({x, y}, {nodes[i].x, nodes[i].y}, nodeR)) {
       return i;
     }
@@ -211,7 +211,7 @@ int Graph::getNode(float x, float y) {
 }
 
 void Graph::removeNode(int id) {
-  for (int i = 0; i < adj.size(); i++) {
+  for (size_t i = 0; i < adj.size(); i++) {
     for (auto it = adj[i].begin(); it != adj[i].end(); ) {
       if ((*it).first == id) it = adj[i].erase(it);
       else {
@@ -223,7 +223,7 @@ void Graph::removeNode(int id) {
   nodes.erase(nodes.begin() + id);
   adj.erase(adj.begin() + id);
 
-  for (int i = id; i < nodes.size(); i++) {
+  for (size_t i = id; i < nodes.size(); i++) {
     nodes[i].id--;
   }
 }

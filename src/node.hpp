@@ -10,7 +10,7 @@ public:
 
   bool marked = false;
 
-  Node(int id, float x, float y) : x(x), y(y), id(id) {};
+  Node(int id, float x, float y) : id(id), x(x), y(y) {};
 
   void drawNode();
 };

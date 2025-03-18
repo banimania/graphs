@@ -33,6 +33,34 @@ bool editingWeight = false;
 int askNodeSt = -1, askNodeFi = -1;
 char weightText[16] = "1.0";
 
+inline void HandleModeSelection(int &mode, Graph &g) {
+  if (IsKeyPressed(KEY_ONE)) {
+    mode = 0;
+    g.restartAlgorithms();
+  } else if (IsKeyPressed(KEY_TWO)) {
+    mode = 1;
+    g.restartAlgorithms();
+  } else if (IsKeyPressed(KEY_THREE)) {
+    mode = 2;
+    g.restartAlgorithms();
+  } else if (IsKeyPressed(KEY_FOUR)) {
+    mode = 3;
+    g.restartAlgorithms();
+  }
+}
+
+inline void HandleCameraZoom(Camera2D &cam) {
+  float wheelDelta = GetMouseWheelMove();
+  if (wheelDelta != 0) {
+    Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), cam);
+    cam.offset = GetMousePosition();
+    cam.target = mouseWorldPos;
+    float scaleFactor = 1.0f + (0.25f * fabsf(wheelDelta));
+    if (wheelDelta < 0) scaleFactor = 1.0f / scaleFactor;
+    cam.zoom = Clamp(cam.zoom * scaleFactor, 0.5f, 16.0f);
+  }
+}
+
 void mainLoop() {
   GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
   
@@ -62,19 +90,8 @@ void mainLoop() {
   BeginMode2D(cam);
 
   if (!inOptionsMenu && !skip && !isAskingWeight) { 
-    if (IsKeyPressed(KEY_ONE)) {
-      mode = 0;
-      g.restartAlgorithms();
-    } else if (IsKeyPressed(KEY_TWO)) {
-      mode = 1;
-      g.restartAlgorithms();
-    } else if (IsKeyPressed(KEY_THREE)) {
-      mode = 2;
-      g.restartAlgorithms();
-    } else if (IsKeyPressed(KEY_FOUR)) {
-      mode = 3;
-      g.restartAlgorithms();
-    }
+    
+    HandleModeSelection(mode, g);
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
       Vector2 delta = GetMouseDelta();
@@ -98,18 +115,7 @@ void mainLoop() {
       }
     }
 
-    float wheelDelta = GetMouseWheelMove();
-    if (wheelDelta != 0) {
-      Vector2 mouseWorldPos = GetScreenToWorld2D(GetMouseWorldPosition(scale), cam);
-
-      cam.offset = GetMousePosition();
-
-      cam.target = mouseWorldPos;
-
-      float scaleFactor = 1.0f + (0.25f * fabsf(wheelDelta));
-      if (wheelDelta < 0) scaleFactor = 1.0f / scaleFactor;
-      cam.zoom = Clamp(cam.zoom * scaleFactor, 0.5f, 16.0f);
-    }
+    HandleCameraZoom(cam);
 
     if (IsKeyReleased(KEY_SPACE)) {
       if (mode == 1) g.dfsStep();
@@ -121,19 +127,15 @@ void mainLoop() {
       if (mode == 0 && lastStNode != -1) {
         g.removeNode(lastStNode);
         lastStNode = -1;
-
       }
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
       stNode = g.getNode(mouseWorldPos.x, mouseWorldPos.y);
 
-      if ((g.startedDFS || g.startedBFS || g.startedDijkstra) && stNode == -1 && !wasMovingCamera) {
-        g.restartAlgorithms();
-      }
-
       // Mark the new node and update lastSelectedNode
       if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && stNode != -1) {
+        g.restartAlgorithms();
         g.nodes[stNode].marked = true;
         lastStNode = stNode;
       }
@@ -199,7 +201,10 @@ void mainLoop() {
           g.nodes[stNode].marked = true;
         }
       } else {
-        if (mode == 0 && !wasMovingCamera) g.addNode(mouseWorldPos.x, mouseWorldPos.y);
+        if (mode == 0 && !wasMovingCamera) {
+          g.restartAlgorithms();
+          g.addNode(mouseWorldPos.x, mouseWorldPos.y);
+        }
       }
 
       stNode = -1;
@@ -302,12 +307,12 @@ void mainLoop() {
     float wh = WINDOW_HEIGHT - 40;
     GuiPanel({wx, wy, ww, wh}, "Dijkstra information");
 
-    for (int i = 0; i < g.nodes.size(); i++) {
+    for (size_t i = 0; i < g.nodes.size(); i++) {
       GuiLabel({wx + 20, wy + 50 + i * 60, 200, 50}, string("Distance to " + to_string(i + 1) + ": " + formatNum(g.bestDist[i])).c_str());
       vector<int> path = g.getDijkstraPath(stNode, i);
       string pathString;
 
-      for (int j = 0; j < path.size(); j++) {
+      for (size_t j = 0; j < path.size(); j++) {
         pathString += to_string(path[j] + 1) + (j == path.size() - 1 ? "" : " -> ");
       }
       GuiLabel({wx + 20, wy + 70 + i * 60, 200, 50}, pathString.c_str()); 
