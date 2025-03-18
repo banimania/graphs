@@ -18,6 +18,24 @@ void Graph::addEdge(int u, int v, float c) {
   if (!directed) adj[v].push_back({u, c});
 }
 
+void drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed) {
+  float theta = atan2(to.y - from.y, to.x - from.x);
+  if (!directed && theta <= 0) theta += M_PI;
+  float alpha = -M_PI / 2 + theta;
+
+  Vector2 pos = {
+    (to.x + from.x) / 2.0f + cos(alpha) * 30.0f, 
+    (to.y + from.y) / 2.0f + sin(alpha) * 30.0f
+  };
+
+  string costString = formatNum(cost);
+
+  pos.x -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).x / 2.0f;
+  pos.y -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).y / 2.0f;
+
+  DrawTextEx(font, costString.c_str(), pos, 30.0f, 0.0f, BLACK);
+}
+
 void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness = 5.0f) {
   float theta = atan2(to.y - from.y, to.x - from.x);
 
@@ -57,20 +75,8 @@ void Graph::drawGraph() {
       Vector2 end = {nodes[adj[i][j].first].x, nodes[adj[i][j].first].y};
 
       if (weighted) {
-        float theta = atan2(end.y - start.y, end.x - start.x);
-        if (!directed && theta <= 0) theta += M_PI;
-        float alpha = -M_PI / 2 + theta;
-
-        Vector2 pos = {(end.x + start.x) / 2.0f + cos(alpha) * 30, 
-                      (end.y + start.y) / 2.0f + sin(alpha) * 30};
-        float cost = adj[i][j].second;
-
-        string costString = formatNum(cost);
-
-        pos.x -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).x / 2.0f;
-        pos.y -= MeasureTextEx(font, costString.c_str(), 30, 0.0f).y / 2.0f;
-        DrawTextEx(font, costString.c_str(), pos, 30.0f, 0.0f, BLACK);
-      }
+        drawEdgeWeight(start, end, adj[i][j].second, directed);
+      }    
 
       if (directed) {
         bool adjustFrom = areNeighbours(adj[i][j].first, i);
@@ -102,25 +108,42 @@ void Graph::drawGraph() {
   }
 }
 
+void Graph::resetSearchStates() {
+  for (auto &node : nodes) {
+      node.marked = false;
+  }
+  markedEdges.clear();
+}
+
+void Graph::resetDFS() {
+  startedDFS = false;
+  dfsStack = stack<int>();
+}
+
+void Graph::resetBFS() {
+  startedBFS = false;
+  bfsQueue = queue<int>();
+}
+
+void Graph::resetDijkstra() {
+  startedDijkstra = false;
+  bestDist.assign(nodes.size(), numeric_limits<float>::infinity());
+  dijkstraPrev.assign(nodes.size(), -1);
+
+  dijkstraPq = priority_queue<
+      pair<int, float>, 
+      vector<pair<int, float>>, 
+      function<bool(pair<int, float>, pair<int, float>)>
+  >([](const pair<int, float>& a, const pair<int, float>& b) {
+      return a.second > b.second;
+  });
+}
 
 void Graph::restartAlgorithms() {
-  startedDFS = false;
-  startedBFS = false;
-  startedDijkstra = false;
-
-  dfsStack = stack<int>();
-  bfsQueue = queue<int>();
-  dijkstraPq = priority_queue<pair<int, float>, vector<pair<int, float>>, function<bool(pair<int, float>, pair<int, float>)>> ([](const pair<int, float> &a, const pair<int, float> &b) {
-    return a.second > b.second;
-  });
-  bestDist = vector<float>(nodes.size(), numeric_limits<float>::infinity());
-  dijkstraPrev = vector<int>(nodes.size(), -1);
-
-  markedEdges.clear();
-
-  for (size_t i = 0; i < nodes.size(); i++) {
-    nodes[i].marked = false;
-  }
+  resetDFS();
+  resetBFS();
+  resetDijkstra();
+  resetSearchStates();
 }
 
 void Graph::dfsStep() {

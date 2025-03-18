@@ -32,6 +32,12 @@ public:
   void removeNode(int id);
   void removeEdge(int u, int v);
   bool areNeighbours(int u, int v);
+
+private:
+  void resetDFS();
+  void resetBFS();
+  void resetDijkstra();
+  void resetSearchStates();
 };
 
 #endif
