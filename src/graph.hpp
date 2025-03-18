@@ -10,10 +10,12 @@ public:
   vector<Node> nodes;
   vector<vector<pair<int, float>>> adj;
   vector<Edge> markedEdges;
+  vector<int> inDegree;
+  vector<int> outDegree;
 
   bool directed = false, weighted = false;
 
-  bool startedDFS = false, startedBFS = false, startedDijkstra = false, startedKruskal = false;
+  bool startedDFS = false, startedBFS = false, startedDijkstra = false, startedKruskal = false, startedHierholzer = false;
   stack<int> dfsStack;
   queue<int> bfsQueue;
   priority_queue<pair<int, float>, vector<pair<int, float>>, function<bool(pair<int, float>, pair<int, float>)>> dijkstraPq;
@@ -23,6 +25,8 @@ public:
   vector<int> setSize;
   priority_queue<Edge, vector<Edge>, function<bool(Edge, Edge)>> kruskalPq;
   float kruskalCost;
+  stack<int> hierholzerStack;
+  vector<int> eulerianPath;
 
   void addNode(float x, float y);
   void addEdge(int u, int v, float cost);
@@ -33,6 +37,7 @@ public:
   void dijkstraStep();
   vector<int> getDijkstraPath(int u, int v);
   void kruskalStep();
+  // void hierholzerStep();
   int getNode(float x, float y);
   void removeNode(int id);
   void removeEdge(int u, int v);
@@ -46,7 +51,11 @@ private:
   void resetDijkstra();
   void resetSearchStates();
   void resetKruskal();
+  void resetHierholzer();
+
   void calculateDSU();
+  void calculateDegrees();
+  int checkDegrees();
 
   void drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed);
   void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness = 5.0f);

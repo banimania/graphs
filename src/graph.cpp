@@ -162,6 +162,12 @@ void Graph::resetKruskal() {
   setSize.assign(nodes.size(), 1);
 }
 
+void Graph::resetHierholzer() {
+  startedHierholzer = false;
+  hierholzerStack = stack<int>();
+  eulerianPath = vector<int>();
+}
+
 int Graph::findSet(int v) {
   if (v == parent[v]) return v;
   return parent[v] = findSet(parent[v]);
@@ -191,6 +197,46 @@ void Graph::calculateDSU() {
   }
 }
 
+void Graph::calculateDegrees() {
+  inDegree.assign(nodes.size(), 0);
+  outDegree.assign(nodes.size(), 0);
+  for (auto [u, v, cost] : edges) {
+    inDegree[v]++;
+    outDegree[u]++;
+  }
+}
+
+int Graph::checkDegrees() {
+  calculateDegrees();
+  int inDegOne = 0;
+  int outDegOne = 0;
+  bool flag = true;
+  int oddDegree = 0;
+  int source = 0;
+  for (size_t i = 0; i < nodes.size(); i++) {
+    if (directed) {
+      if (inDegree[i] - outDegree[i] == 1) inDegOne++;
+      else if (outDegree[i] - inDegree[i] == 1) {
+        outDegOne++;
+        source = i;
+      }
+      else if (inDegree[i] != outDegree[i]) flag = false;
+    } else {
+      if (inDegree[i] % 2 == 1) {
+        oddDegree++;
+        source = i;
+      }
+    }
+  }
+  if (directed) {
+    if (inDegOne == 1 && outDegOne == 1 && flag) return source;
+    else return -1;
+  } else {
+    if (oddDegree == 0 || oddDegree == 2) return source;
+    else return -1;
+  }
+}
+
 void Graph::restartAlgorithms() {
   resetDFS();
   resetBFS();
@@ -198,6 +244,7 @@ void Graph::restartAlgorithms() {
   resetSearchStates();
   calculateDSU();
   resetKruskal();
+  resetHierholzer();
 }
 
 void Graph::dfsStep() {
@@ -299,6 +346,10 @@ void Graph::kruskalStep() {
     }
   }
 }
+
+/*void Graph::hierholzerStep() {
+  int source = checkDegrees();
+}*/
 
 int Graph::getNode(float x, float y) {
   for (size_t i = 0; i < nodes.size(); i++) {

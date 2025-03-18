@@ -34,7 +34,7 @@ bool editingWeight = false;
 int askNodeSt = -1, askNodeFi = -1;
 char weightText[16] = "1.0";
 
-const int GRAPH_BUILDING = 0, DFS = 1, BFS = 2, DIJKSTRA = 3, KRUSKAL = 4;
+const int GRAPH_BUILDING = 0, DFS = 1, BFS = 2, DIJKSTRA = 3, KRUSKAL = 4, HIERHOLZER = 5;
 
 inline void HandleModeSelection(int &mode, Graph &g) {
   if (IsKeyPressed(KEY_ONE)) {
@@ -51,6 +51,9 @@ inline void HandleModeSelection(int &mode, Graph &g) {
     g.restartAlgorithms();
   } else if (IsKeyPressed(KEY_FIVE)) {
     mode = KRUSKAL;
+    g.restartAlgorithms();
+  } else if (IsKeyPressed(KEY_SIX)) {
+    mode = HIERHOLZER;
     g.restartAlgorithms();
   }
 }
@@ -128,6 +131,7 @@ void mainLoop() {
       else if (mode == BFS) g.bfsStep();
       else if (mode == DIJKSTRA) g.dijkstraStep();
       else if (mode == KRUSKAL) g.kruskalStep();
+      else if (mode == HIERHOLZER) g.hierholzerStep();
     }
 
     if (IsKeyPressed(KEY_DELETE) || IsKeyPressed(KEY_BACKSPACE)) {
@@ -211,6 +215,10 @@ void mainLoop() {
         g.restartAlgorithms();
 
         g.startedKruskal = true;
+      } else if(mode == HIERHOLZER) {
+        g.restartAlgorithms();
+
+        g.startedHierholzer = true;
       } else {
         if (mode == GRAPH_BUILDING && !wasMovingCamera) {
           g.restartAlgorithms();
@@ -262,6 +270,8 @@ void mainLoop() {
     modeStr = "Dijkstra";
   } else if (mode == KRUSKAL) {
     modeStr = "Kruskal";
+  } else if (mode == HIERHOLZER) {
+    modeStr = "Hierholzer";
   }
 
   if (inOptionsMenu) {
@@ -315,6 +325,11 @@ void mainLoop() {
       g.restartAlgorithms();
       inOptionsMenu = false;
       mode = 4;
+    }
+    if (GuiButton({150, 475, 230, 40}, "Kruskal")) {
+      g.restartAlgorithms();
+      inOptionsMenu = false;
+      mode = 5;
     }
   }
 
