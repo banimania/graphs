@@ -38,6 +38,10 @@ private:
   void resetBFS();
   void resetDijkstra();
   void resetSearchStates();
+
+  void drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed);
+  void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness = 5.0f);
+  void drawMarkedEdges();
 };
 
 #endif

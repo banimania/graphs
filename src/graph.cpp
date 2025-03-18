@@ -18,7 +18,7 @@ void Graph::addEdge(int u, int v, float c) {
   if (!directed) adj[v].push_back({u, c});
 }
 
-void drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed) {
+void Graph::drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed) {
   float theta = atan2(to.y - from.y, to.x - from.x);
   if (!directed && theta <= 0) theta += M_PI;
   float alpha = -M_PI / 2 + theta;
@@ -36,7 +36,7 @@ void drawEdgeWeight(Vector2 from, Vector2 to, float cost, bool directed) {
   DrawTextEx(font, costString.c_str(), pos, 30.0f, 0.0f, BLACK);
 }
 
-void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness = 5.0f) {
+void Graph::drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, Color color, float thickness) {
   float theta = atan2(to.y - from.y, to.x - from.x);
 
   // Draw arrowhead
@@ -67,6 +67,21 @@ void drawDirectedEdge(Vector2 from, Vector2 to, bool adjustFrom, bool adjustTo, 
   DrawLineEx(adjustedFrom, adjustedTo, thickness, color);
 }
 
+void Graph::drawMarkedEdges() {
+  for (const Edge &e : markedEdges) {
+    Vector2 start = {nodes[e.u].x, nodes[e.u].y};
+    Vector2 end = {nodes[e.v].x, nodes[e.v].y};
+
+    if (directed) {
+      bool adjustFrom = areNeighbours(e.v, e.u);
+      bool adjustTo = areNeighbours(e.u, e.v);
+      drawDirectedEdge(start, end, adjustFrom, adjustTo, ORANGE);
+    } else {
+      DrawLineEx(start, end, 5, ORANGE);
+    }
+  }
+}
+
 void Graph::drawGraph() {
   // Draw black edges
   for (size_t i = 0; i < adj.size(); i++) {
@@ -89,18 +104,7 @@ void Graph::drawGraph() {
   }
 
   // Draw orange edges
-  for (Edge e : markedEdges) {
-    Vector2 start = {nodes[e.u].x, nodes[e.u].y};
-    Vector2 end = {nodes[e.v].x, nodes[e.v].y};
-
-    if (directed) {
-      bool adjustFrom = areNeighbours(e.v, e.u);
-      bool adjustTo = areNeighbours(e.u, e.v);
-      drawDirectedEdge(start, end, adjustFrom, adjustTo, ORANGE);
-    } else {
-      DrawLineEx(start, end, 5, ORANGE);
-    }
-  }
+  drawMarkedEdges();
 
   // Draw nodes
   for (size_t i = 0; i < nodes.size(); i++) {
